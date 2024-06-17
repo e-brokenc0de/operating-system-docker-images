@@ -1,0 +1,37 @@
+# Use the official Ubuntu 22.04 base image
+FROM ubuntu:22.04
+
+# Update the package list and install necessary packages
+RUN apt update && apt install -y \
+    sudo \
+    vim \
+    curl \
+    wget \
+    net-tools \
+    iputils-ping \
+    openssh-server
+
+# Add environment variables for username and password
+ARG USERNAME
+ARG PASSWORD
+
+# Create a new user and set its password
+RUN useradd -m -s /bin/bash $USERNAME && \
+    echo "$USERNAME:$PASSWORD" | chpasswd && \
+    adduser $USERNAME sudo
+
+# Set the root password
+RUN echo 'root:asd' | chpasswd
+
+# Configure SSH server
+RUN mkdir /var/run/sshd && \
+    echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config && \
+    echo 'PasswordAuthentication yes' >> /etc/ssh/sshd_config && \
+    echo 'PermitEmptyPasswords no' >> /etc/ssh/sshd_config
+
+# Expose the SSH port
+EXPOSE 22
+
+# Set the default command to run SSH server
+CMD ["/usr/sbin/sshd", "-D"]
+

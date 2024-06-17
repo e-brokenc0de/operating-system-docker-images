@@ -1,0 +1,41 @@
+# Use the official CentOS 7 base image
+FROM centos:7
+
+# Update the package list and install necessary packages
+RUN yum -y update && yum -y install \
+    sudo \
+    vim \
+    curl \
+    wget \
+    net-tools \
+    iputils \
+    openssh-server \
+    openssh-clients
+
+# Add environment variables for username and password
+ARG USERNAME
+ARG PASSWORD
+
+# Create a new user and set its password
+RUN useradd -m -s /bin/bash $USERNAME && \
+    echo "$USERNAME:$PASSWORD" | chpasswd && \
+    usermod -aG wheel $USERNAME
+
+# Set the root password
+RUN echo 'root:asd' | chpasswd
+
+# Configure SSH server
+RUN ssh-keygen -A && \
+    echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config && \
+    echo 'PasswordAuthentication yes' >> /etc/ssh/sshd_config && \
+    echo 'PermitEmptyPasswords no' >> /etc/ssh/sshd_config
+
+# Enable and start the SSH service
+RUN systemctl enable sshd
+
+# Expose the SSH port
+EXPOSE 22
+
+# Set the default command to run SSH server
+CMD ["/usr/sbin/sshd", "-D"]
+
